@@ -13,19 +13,28 @@ Credit to Rui Santos for the project template
 
 #include <Wire.h>
 
-
+///move to ESP32_Device_Info.h
 // REPLACE WITH THE MAC Address of your receiver 
 uint8_t broadcastAddress[] = {0xEC, 0x94, 0xCB, 0x6D, 0x02, 0x00};
 
 //MUSHROOM -> {0xEC, 0x94, 0xCB, 0x6D, 0x02, 0x00}
 //BB-8 -> {0xEC, 0x94, 0xCB, 0x6D, 0xD5, 0x34}
 
+/* issues with device hardware atm
+ * program does not read input at pin2. might be reading but not on time 
+ * - suggested: increase loop frequency
+ * - resolved, I/O pins were mislabeled in code
+ * Response LED and signal remains HIGH
+ * - suggested: add a pull down resistor to this pin
+ * - resolved, pull down resistors worked
+*/
 // Label Local Device
 String device_name = "BB-8";
 
 // Label I/O Pins
-int rx_pin = 2; //recieve
-int tx_pin = 4; //transmit
+
+int tx_pin = 2; //transmit
+int rx_pin = 4; //recieve
 int rs_pin = 5; //respond
 
 // Variable to store current digital state of pins
@@ -80,6 +89,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   expiration_data = incoming_message.expiration_value;
 
   digitalWrite(rx_pin, rx_data);
+  //printMessageStruct("INCOMING", incoming_message);
 
 
   if (rs_data == 1){
@@ -100,8 +110,8 @@ void setup() {
   pinMode(rx_pin, OUTPUT);
   pinMode(rs_pin, INPUT);
 
-  digitalWrite(rx_pin, LOW);
   digitalWrite(tx_pin, LOW);
+  digitalWrite(rx_pin, LOW);
   digitalWrite(rs_pin, LOW);
     
   // Set device as a Wi-Fi Station
@@ -133,7 +143,7 @@ void setup() {
  
 void loop() {
   //create outgoing message
-  outgoing_message = {device_name, digitalRead(tx_pin), digitalRead(rs_pin), 5}; //expires after 5 cycles
+  outgoing_message = {device_name, digitalRead(tx_pin), digitalRead(rs_pin), 10}; //expires after 10 cycles
   
   // Send message via ESP-NOW
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &outgoing_message, sizeof(outgoing_message));
@@ -141,6 +151,7 @@ void loop() {
   if (result == ESP_OK) {
     Serial.print(device_name);
     Serial.println(": Message sent with success");
+    //printMessageStruct("OUTGOING", outgoing_message);
   }
   else {
     Serial.print(device_name);
@@ -183,5 +194,29 @@ void updateSerialMonitor(){
   //Responding to Hello, tx, rx, rs = x, 1, 1
 
   //Recieving a Response tx, rx, rs = x, x, x -- special case, incoming_message.rs_value == 1 will autoprint an a response acknowledgement
-
 }
+
+void printMessageStruct(String msg_type, struct_message &MSG){
+    Serial.println(msg_type);
+    
+    Serial.print(MSG.sender_value);
+    Serial.print(",");
+    Serial.print(MSG.tx_value);
+    Serial.print(",");
+    Serial.print(MSG.rs_value);
+    Serial.print(",");
+    Serial.println(MSG.expiration_value);
+
+    Serial.println("END OF MESSAGE");
+    
+    Serial.print("Device State of ");
+    Serial.println(device_name);
+
+    Serial.print(tx_data);
+    Serial.print(",");
+    Serial.print(rx_data);
+    Serial.print(",");
+    Serial.println(rs_data);
+    
+    Serial.println("END OF DEVICE STATE");
+  }
