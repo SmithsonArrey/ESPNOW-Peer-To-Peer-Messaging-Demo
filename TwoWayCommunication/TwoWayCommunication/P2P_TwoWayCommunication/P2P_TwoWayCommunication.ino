@@ -17,8 +17,8 @@ Credit to Rui Santos for the project template
 // REPLACE WITH THE MAC Address of your receiver 
 uint8_t broadcastAddress[] = {0xEC, 0x94, 0xCB, 0x6D, 0x02, 0x00};
 
-//BB-8 -> {0xEC, 0x94, 0xCB, 0x6D, 0x02, 0x00}
-//MUSHROOM -> {0xEC, 0x94, 0xCB, 0x6D, 0xD5, 0x34}
+//MUSHROOM -> {0xEC, 0x94, 0xCB, 0x6D, 0x02, 0x00}
+//BB-8 -> {0xEC, 0x94, 0xCB, 0x6D, 0xD5, 0x34}
 
 // Label Local Device
 String device_name = "BB-8";
@@ -99,7 +99,11 @@ void setup() {
   pinMode(tx_pin, INPUT);
   pinMode(rx_pin, OUTPUT);
   pinMode(rs_pin, INPUT);
-  
+
+  digitalWrite(rx_pin, LOW);
+  digitalWrite(tx_pin, LOW);
+  digitalWrite(rs_pin, LOW);
+    
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
 
